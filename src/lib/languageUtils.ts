@@ -16,6 +16,7 @@ export const languages = [
   { code: 'bn', name: 'Bengali', flag: '🇧🇩' },
   { code: 'tr', name: 'Turkish', flag: '🇹🇷' },
   { code: 'pl', name: 'Polish', flag: '🇵🇱' },
+  { code: 'te', name: 'Telugu', flag: '🇮🇳' },
 ];
 
 // Helper to get language by code
@@ -41,6 +42,10 @@ export const detectLanguage = (text: string): string => {
   
   const hasCyrillicChars = /[\u0400-\u04ff]/.test(text);
   if (hasCyrillicChars) return 'ru';
+  
+  // For Telugu
+  const hasTeluguChars = /[\u0C00-\u0C7F]/.test(text);
+  if (hasTeluguChars) return 'te';
   
   // For European languages, we'll use a simplistic approach based on common characters
   if (/[áéíóúüñ]/.test(text)) return 'es';

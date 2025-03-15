@@ -32,6 +32,7 @@ const demoTranslations: Record<string, Record<string, string>> = {
     bn: 'হ্যালো, বিশ্ব!',
     tr: 'Merhaba, dünya!',
     pl: 'Witaj, świecie!',
+    te: 'హలో, ప్రపంచం!',
   },
   'How are you today?': {
     es: '¿Cómo estás hoy?',
@@ -48,6 +49,7 @@ const demoTranslations: Record<string, Record<string, string>> = {
     bn: 'আপনি আজ কেমন আছেন?',
     tr: 'Bugün nasılsın?',
     pl: 'Jak się masz dzisiaj?',
+    te: 'మీరు ఈరోజు ఎలా ఉన్నారు?',
   },
 };
 
@@ -60,7 +62,7 @@ const generateFakeTranslation = (text: string, targetLang: string): string => {
   
   // If not, create a fake translation by:
   // 1. For non-Latin script languages, append a message
-  if (['zh', 'ja', 'ko', 'ar', 'hi', 'bn'].includes(targetLang)) {
+  if (['zh', 'ja', 'ko', 'ar', 'hi', 'bn', 'te'].includes(targetLang)) {
     return `[${targetLang.toUpperCase()}] ${text} (Translation would appear here in ${targetLang})`;
   }
   
@@ -74,6 +76,7 @@ const generateFakeTranslation = (text: string, targetLang: string): string => {
     ru: (t) => `${t} (на русском)`,
     tr: (t) => `${t} (Türkçe olarak)`,
     pl: (t) => `${t} (po polsku)`,
+    te: (t) => `${t} (తెలుగులో)`,
   };
   
   return modifications[targetLang] ? modifications[targetLang](text) : text;
