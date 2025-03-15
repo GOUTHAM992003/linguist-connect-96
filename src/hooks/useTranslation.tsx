@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { 
   translateText, 
@@ -6,7 +5,9 @@ import {
   clearTranslationHistory,
   getUserPreferences,
   updateUserPreferences,
-  translateDocument
+  translateDocument,
+  batchTranslateTexts,
+  getBatchTranslationStatus
 } from '@/lib/translationService';
 import { toast } from '@/components/ui/use-toast';
 import { detectLanguage } from '@/lib/languageUtils';
@@ -15,6 +16,9 @@ interface UseTranslationOptions {
   autoDetect?: boolean;
   defaultSourceLang?: string;
   defaultTargetLang?: string;
+  domain?: 'general' | 'technical' | 'medical' | 'legal' | 'financial' | 'academic';
+  formalityLevel?: 'formal' | 'neutral' | 'informal';
+  useTranslationMemory?: boolean;
 }
 
 export function useTranslation(options?: UseTranslationOptions) {
@@ -28,6 +32,14 @@ export function useTranslation(options?: UseTranslationOptions) {
   const [alternatives, setAlternatives] = useState<string[]>([]);
   const [history, setHistory] = useState<ReturnType<typeof getTranslationHistory>>([]);
   const [preferences, setPreferences] = useState(getUserPreferences());
+  const [domain, setDomain] = useState<UseTranslationOptions['domain']>(options?.domain || 'general');
+  const [formalityLevel, setFormalityLevel] = useState<UseTranslationOptions['formalityLevel']>(
+    options?.formalityLevel || 'neutral'
+  );
+  const [useTranslationMemory, setUseTranslationMemory] = useState<boolean>(
+    options?.useTranslationMemory !== false
+  );
+  const [fromMemory, setFromMemory] = useState(false);
   
   // Load user preferences on mount
   useEffect(() => {
@@ -90,6 +102,105 @@ export function useTranslation(options?: UseTranslationOptions) {
     }
   }, [inputText, sourceLanguage, targetLanguage, isTranslating]);
   
+  const translateWithOptions = useCallback(async () => {
+    if (!inputText.trim() || isTranslating) return;
+    
+    setIsTranslating(true);
+    setFromMemory(false);
+    
+    try {
+      const result = await translateText({
+        text: inputText,
+        sourceLanguage,
+        targetLanguage,
+        domain,
+        formalityLevel,
+        useTranslationMemory
+      });
+      
+      setOutputText(result.translatedText);
+      if (result.detectedLanguage) {
+        setDetectedLanguage(result.detectedLanguage);
+      }
+      if (result.confidence !== undefined) {
+        setConfidence(result.confidence);
+      }
+      setAlternatives(result.alternativeTranslations || []);
+      setFromMemory(!!result.fromTranslationMemory);
+      
+      // Refresh history
+      refreshHistory();
+    } catch (error) {
+      console.error('Translation error:', error);
+      toast({
+        title: "Translation Failed",
+        description: "An error occurred while translating. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [inputText, sourceLanguage, targetLanguage, domain, formalityLevel, useTranslationMemory, isTranslating]);
+  
+  // Override the existing translate function
+  const translate = translateWithOptions;
+  
+  // Batch translation for multiple texts
+  const batchTranslate = useCallback(async (texts: string[]) => {
+    if (!texts.length || isTranslating) return null;
+    
+    setIsTranslating(true);
+    
+    try {
+      const batchResult = await batchTranslateTexts(
+        texts,
+        targetLanguage,
+        sourceLanguage,
+        {
+          domain,
+          formalityLevel,
+          useTranslationMemory
+        }
+      );
+      
+      toast({
+        title: "Batch Translation Started",
+        description: `Translating ${texts.length} items. This may take a moment.`,
+      });
+      
+      // Poll for results
+      const checkStatus = async () => {
+        const status = getBatchTranslationStatus(batchResult.id);
+        
+        if (status.status === 'completed' && status.results) {
+          toast({
+            title: "Batch Translation Complete",
+            description: `Successfully translated ${status.results.length} items.`,
+          });
+          return status.results.map(r => r.translatedText);
+        } else if (status.status === 'failed') {
+          throw new Error(status.error || 'Batch translation failed');
+        } else {
+          // Still processing, wait and check again
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return checkStatus();
+        }
+      };
+      
+      return await checkStatus();
+    } catch (error) {
+      console.error('Batch translation error:', error);
+      toast({
+        title: "Batch Translation Failed",
+        description: error instanceof Error ? error.message : "An error occurred during batch translation.",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsTranslating(false);
+    }
+  }, [sourceLanguage, targetLanguage, domain, formalityLevel, useTranslationMemory, isTranslating]);
+  
   const refreshHistory = useCallback(() => {
     setHistory(getTranslationHistory());
   }, []);
@@ -111,6 +222,29 @@ export function useTranslation(options?: UseTranslationOptions) {
       description: "Your translation preferences have been saved.",
     });
     return updated;
+  }, []);
+  
+  const handleUpdateDomainSettings = useCallback((newSettings: {
+    domain?: UseTranslationOptions['domain'],
+    formalityLevel?: UseTranslationOptions['formalityLevel'],
+    useTranslationMemory?: boolean
+  }) => {
+    if (newSettings.domain !== undefined) {
+      setDomain(newSettings.domain);
+    }
+    
+    if (newSettings.formalityLevel !== undefined) {
+      setFormalityLevel(newSettings.formalityLevel);
+    }
+    
+    if (newSettings.useTranslationMemory !== undefined) {
+      setUseTranslationMemory(newSettings.useTranslationMemory);
+    }
+    
+    toast({
+      title: "Translation Settings Updated",
+      description: "Your translation settings have been updated.",
+    });
   }, []);
   
   const handleSwapLanguages = useCallback(() => {
@@ -163,6 +297,10 @@ export function useTranslation(options?: UseTranslationOptions) {
     alternatives,
     history,
     preferences,
+    domain,
+    formalityLevel,
+    useTranslationMemory,
+    fromMemory,
     
     // Actions
     setInputText,
@@ -170,9 +308,11 @@ export function useTranslation(options?: UseTranslationOptions) {
     setSourceLanguage,
     setTargetLanguage,
     translate,
+    batchTranslate,
     handleSwapLanguages,
     handleClearHistory,
     handleUpdatePreferences,
+    handleUpdateDomainSettings,
     handleTranslateFile,
   };
 }

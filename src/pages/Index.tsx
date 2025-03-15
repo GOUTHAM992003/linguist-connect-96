@@ -7,12 +7,17 @@ import TranslationOutput from '@/components/TranslationOutput';
 import LanguageSelector from '@/components/LanguageSelector';
 import DocumentTranslator from '@/components/DocumentTranslator';
 import TranslationHistory from '@/components/TranslationHistory';
+import TranslationSettings from '@/components/TranslationSettings';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowRight, FileText, Sparkles, Volume2 as VolumeIcon } from 'lucide-react';
+import { ArrowRight, FileText, Sparkles, Volume2 as VolumeIcon, Settings, BookOpen } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('text');
+  const [showSettings, setShowSettings] = useState(false);
   
   const {
     inputText,
@@ -22,6 +27,10 @@ const Index = () => {
     detectedLanguage,
     isTranslating,
     history,
+    domain,
+    formalityLevel,
+    useTranslationMemory,
+    fromMemory,
     setInputText,
     setSourceLanguage,
     setTargetLanguage,
@@ -29,6 +38,7 @@ const Index = () => {
     handleSwapLanguages,
     handleClearHistory,
     handleTranslateFile,
+    handleUpdateDomainSettings
   } = useTranslation({
     autoDetect: true,
   });
@@ -100,11 +110,29 @@ const Index = () => {
               />
             </div>
             
-            <div className="text-xs text-muted-foreground">
-              <button className="hover:text-brand-600 transition-colors">
-                <Sparkles className="h-3.5 w-3.5 inline-block mr-1" />
-                Get AI suggestions
-              </button>
+            <div className="flex items-center gap-3">
+              {domain !== 'general' && (
+                <Badge variant="outline" className="bg-brand-50">
+                  {domain.charAt(0).toUpperCase() + domain.slice(1)}
+                </Badge>
+              )}
+              
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="end">
+                  <TranslationSettings
+                    domain={domain}
+                    formalityLevel={formalityLevel}
+                    useTranslationMemory={useTranslationMemory}
+                    onUpdateSettings={handleUpdateDomainSettings}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           
@@ -128,7 +156,8 @@ const Index = () => {
                 <div className="translate-panel">
                   <TranslationOutput 
                     text={outputText}
-                    loading={isTranslating} 
+                    loading={isTranslating}
+                    fromMemory={fromMemory}
                   />
                 </div>
               </div>
@@ -176,10 +205,10 @@ const Index = () => {
           
           <div className="glass-panel rounded-xl p-6 flex flex-col glass-panel-hover">
             <div className="h-12 w-12 rounded-lg bg-brand-100 flex items-center justify-center mb-4">
-              <VolumeIcon className="h-6 w-6 text-brand-600" />
+              <BookOpen className="h-6 w-6 text-brand-600" />
             </div>
-            <h3 className="text-lg font-medium mb-2">Audio Pronunciation</h3>
-            <p className="text-muted-foreground text-sm">Listen to the correct pronunciation of translated text for better learning.</p>
+            <h3 className="text-lg font-medium mb-2">Specialized Domains</h3>
+            <p className="text-muted-foreground text-sm">Choose from medical, legal, technical and other domains for more accurate translations.</p>
           </div>
         </section>
       </main>
