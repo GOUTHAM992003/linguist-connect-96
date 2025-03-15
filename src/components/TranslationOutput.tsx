@@ -1,17 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Clipboard, VolumeIcon } from 'lucide-react';
+import { Clipboard, VolumeIcon, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TranslationOutputProps {
   text: string;
   loading?: boolean;
+  fromMemory?: boolean;
   className?: string;
 }
 
 const TranslationOutput: React.FC<TranslationOutputProps> = ({
   text,
   loading = false,
+  fromMemory = false,
   className,
 }) => {
   const [copied, setCopied] = useState(false);
@@ -51,6 +53,12 @@ const TranslationOutput: React.FC<TranslationOutputProps> = ({
         <>
           <div className="w-full h-full min-h-[200px] p-4 rounded-lg text-base overflow-y-auto animate-fade-in">
             {text}
+            {fromMemory && (
+              <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-full ml-2">
+                <Database className="h-3 w-3" />
+                From memory
+              </div>
+            )}
           </div>
           
           <div className="absolute bottom-3 right-3 flex gap-2">

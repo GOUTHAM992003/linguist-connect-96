@@ -68,7 +68,8 @@ export function useTranslation(options?: UseTranslationOptions) {
     }
   }, [inputText, options?.autoDetect, preferences.autoDetect]);
   
-  const translate = useCallback(async () => {
+  // Basic translation function
+  const basicTranslate = useCallback(async () => {
     if (!inputText.trim() || isTranslating) return;
     
     setIsTranslating(true);
@@ -102,6 +103,7 @@ export function useTranslation(options?: UseTranslationOptions) {
     }
   }, [inputText, sourceLanguage, targetLanguage, isTranslating]);
   
+  // Advanced translation with options
   const translateWithOptions = useCallback(async () => {
     if (!inputText.trim() || isTranslating) return;
     
@@ -142,10 +144,9 @@ export function useTranslation(options?: UseTranslationOptions) {
     }
   }, [inputText, sourceLanguage, targetLanguage, domain, formalityLevel, useTranslationMemory, isTranslating]);
   
-  // Override the existing translate function
+  // We'll use the more advanced translate function with options
   const translate = translateWithOptions;
   
-  // Batch translation for multiple texts
   const batchTranslate = useCallback(async (texts: string[]) => {
     if (!texts.length || isTranslating) return null;
     
