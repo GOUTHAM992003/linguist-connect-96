@@ -1,4 +1,3 @@
-
 import { detectLanguage } from './languageUtils';
 
 // This is a mock translation service for demo purposes
@@ -13,6 +12,8 @@ interface TranslationRequest {
 interface TranslationResponse {
   translatedText: string;
   detectedLanguage?: string;
+  confidence?: number;
+  alternativeTranslations?: string[];
 }
 
 // Demo translations for various phrases
@@ -85,6 +86,24 @@ const generateFakeTranslation = (text: string, targetLang: string): string => {
 // Simulated delay to mimic API call
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Mock translation history
+const translationHistory: {
+  sourceText: string;
+  targetText: string;
+  sourceLanguage: string;
+  targetLanguage: string;
+  timestamp: number;
+}[] = [];
+
+// Mock user preferences - would come from a database in a real backend
+const userPreferences = {
+  defaultSourceLanguage: 'en',
+  defaultTargetLanguage: 'es',
+  formalityLevel: 'neutral', // neutral, formal, informal
+  saveHistory: true,
+  autoDetect: true,
+};
+
 export async function translateText(
   request: TranslationRequest
 ): Promise<TranslationResponse> {
@@ -95,20 +114,100 @@ export async function translateText(
     return {
       translatedText: text,
       detectedLanguage: sourceLanguage,
+      confidence: 1.0,
     };
   }
   
   // Detect language if not provided
   const detectedLanguage = sourceLanguage || detectLanguage(text);
   
-  // Simulate API delay
+  // Simulate API delay - more realistic with variable timing
   await delay(500 + Math.random() * 800);
   
   // Generate fake translation
   const translatedText = generateFakeTranslation(text, targetLanguage);
   
-  return {
+  // Save to history - in a real app this would go to a database
+  if (userPreferences.saveHistory) {
+    translationHistory.push({
+      sourceText: text,
+      targetText: translatedText,
+      sourceLanguage: detectedLanguage,
+      targetLanguage,
+      timestamp: Date.now(),
+    });
+    
+    // Keep history at a reasonable size (simulating storage constraints)
+    if (translationHistory.length > 100) {
+      translationHistory.shift();
+    }
+  }
+  
+  // Create a more realistic response
+  const response: TranslationResponse = {
     translatedText,
     detectedLanguage,
+    confidence: 0.8 + Math.random() * 0.2, // Simulate a confidence score
   };
+  
+  // Sometimes provide alternative translations
+  if (Math.random() > 0.7) {
+    response.alternativeTranslations = [
+      translatedText + " (alternative 1)",
+      translatedText + " (alternative 2)",
+    ];
+  }
+  
+  return response;
+}
+
+// Get translation history - in a real app this would fetch from a database
+export function getTranslationHistory() {
+  return [...translationHistory];
+}
+
+// Clear translation history
+export function clearTranslationHistory() {
+  translationHistory.length = 0;
+  return { success: true };
+}
+
+// Update user preferences - in a real app this would save to a database
+export function updateUserPreferences(newPreferences: Partial<typeof userPreferences>) {
+  Object.assign(userPreferences, newPreferences);
+  return { ...userPreferences };
+}
+
+// Get user preferences
+export function getUserPreferences() {
+  return { ...userPreferences };
+}
+
+// Handle document translation - mock implementation
+export async function translateDocument(file: File, targetLanguage: string): Promise<{
+  success: boolean;
+  url?: string;
+  error?: string;
+}> {
+  // In a real implementation, this would:
+  // 1. Upload the file to a server
+  // 2. Process it with a translation service
+  // 3. Return a URL to the translated document
+  
+  // Simulate processing time based on file size
+  const processingTime = file.size / 1024 * 10; // 10ms per KB
+  await delay(Math.min(processingTime, 5000)); // Cap at 5 seconds
+  
+  // Simulate success/failure
+  if (Math.random() > 0.1) { // 90% success rate
+    return {
+      success: true,
+      url: `https://example.com/translated-${file.name}`,
+    };
+  } else {
+    return {
+      success: false,
+      error: "Error processing document. Please try again.",
+    };
+  }
 }

@@ -1,61 +1,43 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TranslationInput from '@/components/TranslationInput';
 import TranslationOutput from '@/components/TranslationOutput';
 import LanguageSelector from '@/components/LanguageSelector';
-import { translateText } from '@/lib/translationService';
-import { detectLanguage } from '@/lib/languageUtils';
+import DocumentTranslator from '@/components/DocumentTranslator';
+import TranslationHistory from '@/components/TranslationHistory';
+import { useTranslation } from '@/hooks/useTranslation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowRight, FileText, Sparkles, Volume2 as VolumeIcon } from 'lucide-react';
 
 const Index = () => {
-  const [inputText, setInputText] = useState('');
-  const [outputText, setOutputText] = useState('');
-  const [sourceLanguage, setSourceLanguage] = useState('en');
-  const [targetLanguage, setTargetLanguage] = useState('es');
-  const [detectedLanguage, setDetectedLanguage] = useState<string | undefined>();
-  const [isTranslating, setIsTranslating] = useState(false);
+  const [activeTab, setActiveTab] = useState('text');
   
-  useEffect(() => {
-    // Auto-detect language when input changes
-    if (inputText.trim().length > 3) {
-      const detected = detectLanguage(inputText);
-      setDetectedLanguage(detected);
-      setSourceLanguage(detected);
-    }
-  }, [inputText]);
+  const {
+    inputText,
+    outputText,
+    sourceLanguage,
+    targetLanguage,
+    detectedLanguage,
+    isTranslating,
+    history,
+    setInputText,
+    setSourceLanguage,
+    setTargetLanguage,
+    translate,
+    handleSwapLanguages,
+    handleClearHistory,
+    handleTranslateFile,
+  } = useTranslation({
+    autoDetect: true,
+  });
   
-  const handleTranslate = async () => {
-    if (!inputText.trim() || isTranslating) return;
-    
-    setIsTranslating(true);
-    try {
-      const result = await translateText({
-        text: inputText,
-        sourceLanguage,
-        targetLanguage,
-      });
-      
-      setOutputText(result.translatedText);
-      if (result.detectedLanguage) {
-        setDetectedLanguage(result.detectedLanguage);
-      }
-    } catch (error) {
-      console.error('Translation error:', error);
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-  
-  const handleSwapLanguages = () => {
-    const temp = sourceLanguage;
-    setSourceLanguage(targetLanguage);
-    setTargetLanguage(temp);
-    
-    // Also swap the text content
-    setInputText(outputText);
-    setOutputText('');
+  const handleSelectHistoryItem = (item: any) => {
+    setInputText(item.sourceText);
+    setSourceLanguage(item.sourceLanguage);
+    setTargetLanguage(item.targetLanguage);
+    setActiveTab('text');
   };
   
   return (
@@ -77,10 +59,16 @@ const Index = () => {
           </p>
           
           <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <button className="button-animation px-6 py-3 rounded-lg bg-brand-500 text-white font-medium text-sm shadow-sm">
+            <button 
+              className="button-animation px-6 py-3 rounded-lg bg-brand-500 text-white font-medium text-sm shadow-sm"
+              onClick={() => setActiveTab('text')}
+            >
               Get Started
             </button>
-            <button className="button-animation px-6 py-3 rounded-lg border border-border bg-white text-foreground font-medium text-sm">
+            <button 
+              className="button-animation px-6 py-3 rounded-lg border border-border bg-white text-foreground font-medium text-sm"
+              onClick={() => setActiveTab('document')}
+            >
               <FileText className="h-4 w-4 mr-2 inline-block" />
               Translate Documents
             </button>
@@ -120,22 +108,51 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-            <div className="translate-panel">
-              <TranslationInput 
-                value={inputText} 
-                onChange={setInputText}
-                onTranslate={handleTranslate}
-                isBusy={isTranslating}
-              />
-            </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+              <TabsTrigger value="text">Text Translation</TabsTrigger>
+              <TabsTrigger value="document">Document Translation</TabsTrigger>
+            </TabsList>
             
-            <div className="translate-panel">
-              <TranslationOutput 
-                text={outputText}
-                loading={isTranslating} 
-              />
-            </div>
+            <TabsContent value="text">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                <div className="translate-panel">
+                  <TranslationInput 
+                    value={inputText} 
+                    onChange={setInputText}
+                    onTranslate={translate}
+                    isBusy={isTranslating}
+                  />
+                </div>
+                
+                <div className="translate-panel">
+                  <TranslationOutput 
+                    text={outputText}
+                    loading={isTranslating} 
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="document">
+              <div className="max-w-2xl mx-auto">
+                <DocumentTranslator
+                  sourceLanguage={sourceLanguage}
+                  targetLanguage={targetLanguage}
+                  onTranslate={handleTranslateFile}
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          {/* Translation history */}
+          <div className="mt-12">
+            <h3 className="text-lg font-medium mb-4">Translation History</h3>
+            <TranslationHistory 
+              history={history} 
+              onClear={handleClearHistory}
+              onSelectItem={handleSelectHistoryItem}
+            />
           </div>
         </section>
         

@@ -1,4 +1,3 @@
-
 // Available languages for translation
 export const languages = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -56,4 +55,62 @@ export const detectLanguage = (text: string): string => {
   
   // Default to English
   return 'en';
+};
+
+// File types that can be translated
+export const supportedFileTypes = [
+  { extension: 'txt', mimeType: 'text/plain', name: 'Text Document' },
+  { extension: 'pdf', mimeType: 'application/pdf', name: 'PDF Document' },
+  { extension: 'docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', name: 'Word Document' },
+  { extension: 'html', mimeType: 'text/html', name: 'HTML Document' },
+  { extension: 'json', mimeType: 'application/json', name: 'JSON File' },
+  { extension: 'md', mimeType: 'text/markdown', name: 'Markdown Document' },
+];
+
+// Check if a file is supported for translation
+export const isFileSupported = (file: File): boolean => {
+  return supportedFileTypes.some(type => 
+    file.type === type.mimeType || file.name.endsWith(`.${type.extension}`)
+  );
+};
+
+// Get estimated word count from file size (very rough estimation)
+export const estimateWordCount = (fileSize: number): number => {
+  // Rough estimate: 1KB = ~170 words for plain text
+  return Math.round(fileSize / 1024 * 170);
+};
+
+// Format languages for display in UI
+export const formatLanguagePair = (source: string, target: string): string => {
+  const sourceLang = getLanguageByCode(source);
+  const targetLang = getLanguageByCode(target);
+  return `${sourceLang.flag} ${sourceLang.name} → ${targetLang.flag} ${targetLang.name}`;
+};
+
+// Get translation difficulty estimation (purely for UI demonstration)
+export const getTranslationDifficulty = (source: string, target: string): 'easy' | 'medium' | 'hard' => {
+  // Languages with similar roots are easier to translate between
+  const europeanLanguages = ['en', 'es', 'fr', 'de', 'it', 'pt', 'pl'];
+  const asianLanguages = ['zh', 'ja', 'ko'];
+  const indianLanguages = ['hi', 'bn', 'te'];
+  
+  // Same language family is easy
+  if (
+    (europeanLanguages.includes(source) && europeanLanguages.includes(target)) ||
+    (asianLanguages.includes(source) && asianLanguages.includes(target)) ||
+    (indianLanguages.includes(source) && indianLanguages.includes(target))
+  ) {
+    return 'easy';
+  }
+  
+  // European to/from Indian is medium
+  if (
+    (europeanLanguages.includes(source) && indianLanguages.includes(target)) ||
+    (indianLanguages.includes(source) && europeanLanguages.includes(target))
+  ) {
+    return 'medium';
+  }
+  
+  // Everything else is hard (especially with different writing systems)
+  return 'hard';
 };
