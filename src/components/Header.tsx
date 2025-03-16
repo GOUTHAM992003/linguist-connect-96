@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Globe } from 'lucide-react';
+import { Globe, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter, DrawerTrigger } from '@/components/ui/drawer';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 interface HeaderProps {
   className?: string;
@@ -19,15 +20,27 @@ const signInSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+});
+
 const Header: React.FC<HeaderProps> = ({ className }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
       email: '',
       password: '',
+    },
+  });
+  
+  const forgotPasswordForm = useForm<z.infer<typeof forgotPasswordSchema>>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
     },
   });
   
@@ -48,6 +61,15 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
     toast({
       title: "Signed out",
       description: "You have been signed out successfully",
+    });
+  };
+  
+  const onForgotPasswordSubmit = (values: z.infer<typeof forgotPasswordSchema>) => {
+    // This would be replaced with actual password reset logic
+    setIsForgotPasswordOpen(false);
+    toast({
+      title: "Password reset link sent",
+      description: `Check your email at ${values.email} for password reset instructions`,
     });
   };
   
@@ -119,6 +141,19 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
                         </FormItem>
                       )}
                     />
+                    <div className="flex justify-end">
+                      <Button 
+                        type="button" 
+                        variant="link" 
+                        className="px-0 h-auto text-xs text-brand-600"
+                        onClick={() => {
+                          setIsForgotPasswordOpen(true);
+                          forgotPasswordForm.reset();
+                        }}
+                      >
+                        Forgot password?
+                      </Button>
+                    </div>
                     <Button type="submit" className="w-full">Sign In</Button>
                   </form>
                 </Form>
@@ -132,6 +167,43 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
           </Drawer>
         )}
       </div>
+
+      {/* Forgot Password Dialog */}
+      <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset your password</DialogTitle>
+          </DialogHeader>
+          <Form {...forgotPasswordForm}>
+            <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPasswordSubmit)} className="space-y-4">
+              <FormField
+                control={forgotPasswordForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <Input placeholder="Enter your email" {...field} />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsForgotPasswordOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  Send reset link
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 };
