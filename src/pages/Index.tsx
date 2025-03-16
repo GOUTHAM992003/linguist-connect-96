@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TranslationInput from '@/components/TranslationInput';
@@ -18,6 +17,7 @@ import { Button } from '@/components/ui/button';
 const Index = () => {
   const [activeTab, setActiveTab] = useState('text');
   const [showSettings, setShowSettings] = useState(false);
+  const tabsRef = useRef<HTMLDivElement>(null);
   
   const {
     inputText,
@@ -50,6 +50,14 @@ const Index = () => {
     setActiveTab('text');
   };
   
+  const handleGetStarted = () => {
+    setActiveTab('text');
+    // Scroll to the translation interface if it's not in view
+    if (tabsRef.current) {
+      tabsRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+  
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -71,13 +79,18 @@ const Index = () => {
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             <button 
               className="button-animation px-6 py-3 rounded-lg bg-brand-500 text-white font-medium text-sm shadow-sm"
-              onClick={() => setActiveTab('text')}
+              onClick={handleGetStarted}
             >
               Get Started
             </button>
             <button 
               className="button-animation px-6 py-3 rounded-lg border border-border bg-white text-foreground font-medium text-sm"
-              onClick={() => setActiveTab('document')}
+              onClick={() => {
+                setActiveTab('document');
+                if (tabsRef.current) {
+                  tabsRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
             >
               <FileText className="h-4 w-4 mr-2 inline-block" />
               Translate Documents
@@ -136,7 +149,7 @@ const Index = () => {
             </div>
           </div>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8" ref={tabsRef}>
             <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
               <TabsTrigger value="text">Text Translation</TabsTrigger>
               <TabsTrigger value="document">Document Translation</TabsTrigger>
