@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   className?: string;
@@ -28,6 +29,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const navigate = useNavigate();
   
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -72,13 +74,19 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       description: `Check your email at ${values.email} for password reset instructions`,
     });
   };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
   
   return (
     <header className={`w-full py-4 md:py-6 px-4 flex items-center justify-between animate-slide-down ${className}`}>
       <div className="flex items-center gap-2">
-        <div className="h-10 w-10 rounded-full bg-brand-500 flex items-center justify-center shadow-sm">
-          <Globe className="h-6 w-6 text-white" />
-        </div>
+        <Link to="/">
+          <div className="h-10 w-10 rounded-full bg-brand-500 flex items-center justify-center shadow-sm">
+            <Globe className="h-6 w-6 text-white" />
+          </div>
+        </Link>
         <div className="font-display">
           <h1 className="text-xl font-bold tracking-tight">LinguistConnect</h1>
           <p className="text-xs text-muted-foreground">AI-Powered Translation</p>
@@ -86,9 +94,24 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
       </div>
       
       <nav className="hidden md:flex items-center gap-6">
-        <a href="#" className="text-sm font-medium hover:text-brand-600 transition-colors">Translate</a>
-        <a href="#" className="text-sm font-medium hover:text-brand-600 transition-colors">Documents</a>
-        <a href="#" className="text-sm font-medium hover:text-brand-600 transition-colors">About</a>
+        <button 
+          onClick={() => handleNavigation('/')} 
+          className="text-sm font-medium hover:text-brand-600 transition-colors"
+        >
+          Translate
+        </button>
+        <button 
+          onClick={() => handleNavigation('/documents')} 
+          className="text-sm font-medium hover:text-brand-600 transition-colors"
+        >
+          Documents
+        </button>
+        <button 
+          onClick={() => handleNavigation('/about')} 
+          className="text-sm font-medium hover:text-brand-600 transition-colors"
+        >
+          About
+        </button>
       </nav>
       
       <div className="flex items-center gap-2">
