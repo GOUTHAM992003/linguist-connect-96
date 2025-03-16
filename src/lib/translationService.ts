@@ -383,20 +383,20 @@ export async function translateDocument(file: File, targetLanguage: string): Pro
   // 2. Process it with a translation service
   // 3. Return a URL to the translated document
   
-  // Simulate processing time based on file size
-  const processingTime = file.size / 1024 * 10; // 10ms per KB
-  await delay(Math.min(processingTime, 5000)); // Cap at 5 seconds
-  
-  // Simulate success/failure
-  if (Math.random() > 0.1) { // 90% success rate
-    return {
-      success: true,
-      url: `https://example.com/translated-${file.name}`,
-    };
-  } else {
+  if (!file || !file.name) {
     return {
       success: false,
-      error: "Error processing document. Please try again.",
+      error: "Invalid file provided",
     };
   }
+  
+  // Simulate processing time based on file size
+  const processingTime = Math.max(1000, file.size / 1024 * 10); // 10ms per KB, minimum 1s
+  await delay(Math.min(processingTime, 5000)); // Cap at 5 seconds
+  
+  // Simulate success (removed random failure for demo purposes)
+  return {
+    success: true,
+    url: `https://example.com/translated-${file.name}?lang=${targetLanguage}`,
+  };
 }

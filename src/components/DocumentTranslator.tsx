@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { FileInput, Upload, FileCheck2, AlertCircle, FileX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,8 @@ const DocumentTranslator: React.FC<DocumentTranslatorProps> = ({
       
       if (url) {
         setDownloadUrl(url);
+      } else {
+        throw new Error("Failed to get download URL");
       }
     } catch (err) {
       setError("Failed to translate document. Please try again.");
@@ -107,6 +110,16 @@ const DocumentTranslator: React.FC<DocumentTranslatorProps> = ({
           />
           
           {!file && !error && (
+            <div className="flex flex-col items-center">
+              <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+              <p className="font-medium">Drop file here or click to upload</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Supported formats: {supportedFileTypes.map(t => t.extension.toUpperCase()).join(', ')}
+              </p>
+            </div>
+          )}
+          
+          {file && !error && (
             <div className="flex flex-col items-center">
               <FileCheck2 className="h-10 w-10 text-green-500 mb-2" />
               <p className="font-medium">{file.name}</p>

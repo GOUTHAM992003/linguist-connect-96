@@ -255,8 +255,8 @@ export function useTranslation(options?: UseTranslationOptions) {
     setOutputText('');
   }, [sourceLanguage, targetLanguage, outputText]);
   
-  const handleTranslateFile = useCallback(async (file: File) => {
-    if (!file) return;
+  const handleTranslateFile = useCallback(async (file: File): Promise<string | null> => {
+    if (!file) return null;
     
     toast({
       title: "Processing Document",
